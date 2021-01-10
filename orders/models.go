@@ -13,8 +13,8 @@ type Order struct {
 	ID           uint      `gorm:"primary_key;auto_increment" json:"id"`
 	OrderID      string    `json:"order_id"`
 	UserID       uint      `json:"user_id"`
-	TrainID      uint      `json:"train_id"`
-	SeatID       uint      `json:"train_id"`
+	TripID       uint      `json:"trip"`
+	SeatID       uint      `json:"seat_id"`
 	StartNo      uint      `json:"startNo"`
 	EndNo        uint      `json:"endNo"`
 	StartStation string    `json:"startStation"`
@@ -58,7 +58,7 @@ func (order *Order) cancleOrder() error { //取消订单
 	//判断下单的用户是不是登录用户本人，借助中间件
 
 	// 	1.update seat table
-	err = tx.Table("seats_segments").Where("train_id = ? AND segment between ? AND ? and seat_id = ?", order.TrainID, order.StartNo, order.EndNo-1, order.SeatID).Updates(map[string]interface{}{"status": 0}).Error
+	err = tx.Table("trip_seat_segment").Where("trip_id = ? AND segment between ? AND ? and seat_id = ?", order.TripID, order.StartNo, order.EndNo-1, order.SeatID).Updates(map[string]interface{}{"status": 0}).Error
 	if err != nil {
 		tx.Rollback()
 		return err
