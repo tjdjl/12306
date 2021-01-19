@@ -18,7 +18,7 @@ type TicketResponse struct {
 	arrivalTime       time.Time                `json:"arrivalTime"`
 	startStationType      uint                `json:"startStationType"`
 	endStationType       uint   `json:"endStationType"`
-	Tags           []string              `json:"businessSeatsNumber"`
+	businessSeatsNumber    uint              `json:"businessSeatsNumber"`
 	firstSeatsNumber       bool                  `json:"firstSeatsNumber"`
 	secondSeatsNumber uint                  `json:"secondSeatsNumber"`
 	hardSeatsNumber uint                  `json:"hardSeatsNumber"`
