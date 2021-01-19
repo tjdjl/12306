@@ -21,7 +21,7 @@
   <component name="ChangeListManager">
     <list default="true" id="4e0e824e-9ccb-4ea4-be19-1bd81b35328e" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tickets/controllers.go" beforeDir="false" afterPath="$PROJECT_DIR$/tickets/controllers.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routes.go" beforeDir="false" afterPath="$PROJECT_DIR$/routes.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tickets/models.go" beforeDir="false" afterPath="$PROJECT_DIR$/tickets/models.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tickets/serializers.go" beforeDir="false" afterPath="$PROJECT_DIR$/tickets/serializers.go" afterDir="false" />
     </list>
