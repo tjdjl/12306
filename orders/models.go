@@ -13,7 +13,7 @@ type Order struct {
 	ID           uint      `gorm:"primary_key;auto_increment" json:"id"`
 	OrderID      string    `json:"order_id"`
 	UserID       uint      `json:"user_id"`
-	TripID       uint      `json:"trip"`
+	TripID       uint      `json:"trip—_id"`
 	SeatID       uint      `json:"seat_id"`
 	StartNo      uint      `json:"startNo"`
 	EndNo        uint      `json:"endNo"`
