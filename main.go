@@ -18,6 +18,8 @@ func main() {
 	db.AutoMigrate(&users.User{})
 	db.AutoMigrate(&stations.Station{})
 	db.AutoMigrate(&orders.Order{})
+	// myNum := []uint{255, 255}
+	// db.Table("trip_segment").Where("trip_id = 20 AND segment_no between 1 AND 2").Updates(map[string]interface{}{"second_seats": myNum})
 
 	defer db.Close()
 

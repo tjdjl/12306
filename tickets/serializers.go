@@ -14,19 +14,19 @@ type TicketResponse struct {
 	TripID                uint      `json:"trainNumber"`
 	StartStationNo        uint      `json:"startStationNo"`
 	EndStationNo          uint      `json:"endStationNo"`
-	startStation          string    `json:"startStation"`
-	endStation            string    `json:"endStation"`
-	startTime             time.Time `json:"startTime"`
-	arrivalTime           time.Time `json:"arrivalTime"`
-	startStationType      uint      `json:"startStationType"`
-	endStationType        uint      `json:"endStationType"`
-	businessSeatsNumber   uint      `json:"businessSeatsNumber"`
-	firstSeatsNumber      bool      `json:"firstSeatsNumber"`
-	secondSeatsNumber     uint      `json:"secondSeatsNumber"`
-	hardSeatsNumber       uint      `json:"hardSeatsNumber"`
-	hardBerthNumber       uint      `json:"hardBerthNumber"`
-	softBerthNumber       uint      `json:"softBerthNumber"`
-	seniorSoftBerthNumber uint      `json:"seniorSoftBerthNumber"`
+	StartStation          string    `json:"startStation"`
+	EndStation            string    `json:"endStation"`
+	StartTime             time.Time `json:"startTime"`
+	ArrivalTime           time.Time `json:"arrivalTime"`
+	StartStationType      uint      `json:"startStationType"`
+	EndStationType        uint      `json:"endStationType"`
+	BusinessSeatsNumber   uint      `json:"businessSeatsNumber"`
+	FirstSeatsNumber      uint      `json:"firstSeatsNumber"`
+	SecondSeatsNumber     uint      `json:"secondSeatsNumber"`
+	HardSeatsNumber       uint      `json:"hardSeatsNumber"`
+	HardBerthNumber       uint      `json:"hardBerthNumber"`
+	SoftBerthNumber       uint      `json:"softBerthNumber"`
+	SeniorSoftBerthNumber uint      `json:"seniorSoftBerthNumber"`
 }
 type TicketsSerializer struct {
 	C       *gin.Context
@@ -36,12 +36,20 @@ type TicketsSerializer struct {
 func (s *TicketsSerializer) Response() []TicketResponse {
 	response := []TicketResponse{}
 	for _, ticket := range s.Tickets {
+		seatNumbers := ticket.getSeatDetail()
 		temp := TicketResponse{
-			TripID:         ticket.TripID,
-			StartStationNo: ticket.StartStationNo,
-			EndStationNo:   ticket.EndStationNo,
-			startStation:   ticket.StartStation,
-			endStation:     ticket.EndStation,
+			TripID:                ticket.TripID,
+			StartStationNo:        ticket.StartStationNo,
+			EndStationNo:          ticket.EndStationNo,
+			StartStation:          ticket.StartStation,
+			EndStation:            ticket.EndStation,
+			BusinessSeatsNumber:   seatNumbers.BusinessSeats,
+			FirstSeatsNumber:      seatNumbers.FirstSeats,
+			SecondSeatsNumber:     seatNumbers.SecondSeats,
+			HardSeatsNumber:       seatNumbers.HardBerth,
+			HardBerthNumber:       seatNumbers.HardBerth,
+			SoftBerthNumber:       seatNumbers.SoftBerth,
+			SeniorSoftBerthNumber: seatNumbers.SeniorSoftBerth,
 		}
 		response = append(response, temp)
 	}
