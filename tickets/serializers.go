@@ -36,20 +36,19 @@ type TicketListSerializer struct {
 func (s *TicketListSerializer) Response() []TicketListResponse {
 	response := []TicketListResponse{}
 	for _, ticket := range s.Tickets {
-		seatNumbers := ticket.getRemainSeats()
 		temp := TicketListResponse{
 			TripID:         ticket.TripID,
 			StartStationNo: ticket.StartStationNo,
 			EndStationNo:   ticket.EndStationNo,
 			// StartStation:          ticket.StartStation,
 			// EndStation:            ticket.EndStation,
-			BusinessSeatsNumber:   seatNumbers.BusinessSeats,
-			FirstSeatsNumber:      seatNumbers.FirstSeats,
-			SecondSeatsNumber:     seatNumbers.SecondSeats,
-			HardSeatsNumber:       seatNumbers.HardBerth,
-			HardBerthNumber:       seatNumbers.HardBerth,
-			SoftBerthNumber:       seatNumbers.SoftBerth,
-			SeniorSoftBerthNumber: seatNumbers.SeniorSoftBerth,
+			BusinessSeatsNumber:   ticket.getRemainSeats("BusinessSeat"),
+			FirstSeatsNumber:      ticket.getRemainSeats("FirstSeat"),
+			SecondSeatsNumber:     ticket.getRemainSeats("SecondSeat"),
+			HardSeatsNumber:       ticket.getRemainSeats("HardSeats"),
+			HardBerthNumber:       ticket.getRemainSeats("HardBerth"),
+			SoftBerthNumber:       ticket.getRemainSeats("SoftBerth"),
+			SeniorSoftBerthNumber: ticket.getRemainSeats("SeniorSoftBerth"),
 		}
 		response = append(response, temp)
 	}

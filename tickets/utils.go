@@ -6,57 +6,47 @@ import (
 )
 
 //calculasRemainSeats 帮助计算余量，将TripSegmentbytes转化为RemainSeats
-func calculasRemainSeats(info []TripSegment) RemainSeats {
-	var resBytes TripSegment = info[0]
+func calculasRemainSeats(info []TripSegment) uint {
+	if len(info) == 0 {
+		return 0
+	}
+	resBytes := info[0].SeatBytes
 	//对每个区间作与运算
 	for i := 1; i < len(info); i++ {
-		//计算BusinessSeats 经过与运算后的位图
-		for j := 0; j < len(resBytes.BusinessSeats); j++ {
-			resBytes.BusinessSeats[j] = resBytes.BusinessSeats[j] & info[i].BusinessSeats[j]
-		}
-		for j := 0; j < len(resBytes.FirstSeats); j++ {
-			resBytes.FirstSeats[j] = resBytes.FirstSeats[j] & info[i].FirstSeats[j]
-		}
-		for j := 0; j < len(resBytes.SecondSeats); j++ {
-			resBytes.SecondSeats[j] = resBytes.SecondSeats[j] & info[i].SecondSeats[j]
-		}
-		for j := 0; j < len(resBytes.HardSeats); j++ {
-			resBytes.HardSeats[j] = resBytes.HardSeats[j] & info[i].HardSeats[j]
-		}
-		for j := 0; j < len(resBytes.HardBerth); j++ {
-			resBytes.HardBerth[j] = resBytes.HardBerth[j] & info[i].HardBerth[j]
-		}
-		for j := 0; j < len(resBytes.SoftBerth); j++ {
-			resBytes.SoftBerth[j] = resBytes.SoftBerth[j] & info[i].SoftBerth[j]
-		}
-		for j := 0; j < len(resBytes.SeniorSoftBerth); j++ {
-			resBytes.SeniorSoftBerth[j] = resBytes.SeniorSoftBerth[j] & info[i].SeniorSoftBerth[j]
+		for j := 0; j < len(resBytes); j++ {
+			resBytes[j] = resBytes[j] & info[i].SeatBytes[j]
 		}
 		fmt.Println("与运算后bytes", resBytes)
 	}
-	var res RemainSeats
-	res.BusinessSeats = countOne(resBytes.BusinessSeats)
-	res.FirstSeats = countOne(resBytes.FirstSeats)
-	res.SecondSeats = countOne(resBytes.SecondSeats)
-	res.HardSeats = countOne(resBytes.HardSeats)
-	res.HardBerth = countOne(resBytes.HardBerth)
-	res.SoftBerth = countOne(resBytes.SoftBerth)
-	res.SeniorSoftBerth = countOne(resBytes.SeniorSoftBerth)
+	res := countOne(resBytes)
 	fmt.Println("最终结果：", res)
 	return res
 }
-
-func calculasValidSeatNo(info []TripSegmentSeats) (uint, error) {
-	resBytes := info[0]
+func calculasValidSeatNo(info []TripSegment) (uint, error) {
+	if len(info) == 0 {
+		return 0, errors.New("没有余票了")
+	}
+	resBytes := info[0].SeatBytes
 	//对每个区间作与运算
 	for i := 1; i < len(info); i++ {
 		//计算Seats 经过与运算后的位图
-		for j := 0; j < len(resBytes.Seats); j++ {
-			resBytes.Seats[j] = resBytes.Seats[j] & info[i].Seats[j]
+		for j := 0; j < len(resBytes); j++ {
+			resBytes[j] = resBytes[j] & info[i].SeatBytes[j]
 		}
 		fmt.Println("与运算后bytes", resBytes)
 	}
-	return FirstOne(resBytes.Seats)
+	return FirstOne(resBytes)
+}
+func setZero(info []TripSegment, validSeatNo uint) {
+	if len(info) == 0 {
+		return
+	}
+	index := validSeatNo - 1>>3 //100号
+	pos := (validSeatNo - 1) % 8
+	//对每个区间更改
+	for i := 0; i < len(info); i++ {
+		info[i].SeatBytes[index] = info[i].SeatBytes[index] & ^(1 << pos)
+	}
 }
 
 //countOne 帮助计算余量 可以优化成hashmap查询
@@ -77,13 +67,12 @@ func countOne(num []uint8) uint {
 //FirstOne
 func FirstOne(num []uint8) (uint, error) {
 	count := uint(1)
-	for i := len(num) - 1; i >= 0; i-- {
+	for i := 0; i < len(num); i++ {
 		temp := num[i]
-		for i := 0; i < 8; i++ {
-			if temp%2 != 0 {
+		for j := 7; j <= 0; j-- {
+			if (1<<j)&temp != 0 {
 				return count, nil
 			}
-			temp /= 2
 			count++
 		}
 	}

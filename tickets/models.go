@@ -70,22 +70,8 @@ func FindHishSpeedTripSeriesList(startCity, endCity, date string) ([]TripSeries,
 	return models, err
 }
 
-//TripSegment 对应trip_segment的一行
+//TripSegment 对应trip_segment1的一行
 type TripSegment struct {
-	ID              uint    `gorm:"column:id"`
-	TripID          uint    `gorm:"column:trip_id"`
-	SegmentNo       uint    `gorm:"column:segment_no"`
-	BusinessSeats   []uint8 `gorm:"column:business_seats"`
-	FirstSeats      []uint8 `gorm:"column:first_seats"`
-	SecondSeats     []uint8 `gorm:"column:second_seats"`
-	HardSeats       []uint8 `gorm:"column:hard_seats"`
-	HardBerth       []uint8 `gorm:"column:hard_berth"`
-	SoftBerth       []uint8 `gorm:"column:soft_berth"`
-	SeniorSoftBerth []uint8 `gorm:"column:senior_soft_berth"`
-}
-
-//TripSegment1 对应trip_segment1的一行
-type TripSegment1 struct {
 	ID           uint    `gorm:"column:id"`
 	TripID       uint    `gorm:"column:trip_id"`
 	SegmentNo    uint    `gorm:"column:segment_no"`
@@ -93,14 +79,16 @@ type TripSegment1 struct {
 	SeatBytes    []uint8 `gorm:"column:seat_bytes"`
 }
 
-//getRemainSeats 对于给定的TripSeries，返回各个类型的座位的座位余量
-func (s *TripSeries) getRemainSeats() RemainSeats { //获取票的座位余量信息
+//getRemainSeats 对于给定的TripSeries，根据座位类型,返回座位余量
+func (s *TripSeries) getRemainSeats(catogory string) uint { //获取票的座位余量信息
 	db := common.GetDB()
+	//business_seats
 	var info []TripSegment
-	// 批量读取
-	db.Raw("SELECT * FROM trip_segment WHERE trip_id = ? AND segment_no between ? AND ? ", s.TripID, s.StartStationNo, s.EndStationNo-1).Find(&info)
+	string := "SELECT * FROM trip_segment WHERE trip_id = ? AND segment_no between ? AND ? AND seat_catogory = ?"
+	db.Raw(string, s.TripID, s.StartStationNo, s.EndStationNo-1, catogory).Find(&info)
 	fmt.Println("座位：", info)
 	res := calculasRemainSeats(info)
+	fmt.Println("余量:", res)
 	return res
 }
 
@@ -108,28 +96,36 @@ func (s *TripSeries) getRemainSeats() RemainSeats { //获取票的座位余量�
 func (s *TripSeries) orderOneSeat(catogory string) error {
 	db := common.GetDB()
 	tx := db.Begin()
-	//1.找到一个有效的座位号validSeatNo
-	var seats []TripSegmentSeats
-	string := "SELECT " + catogory + " AS seats FROM trip_segment WHERE trip_id = ? AND segment_no between ? AND ? "
-	err := tx.Set("gorm:query_option", "FOR UPDATE").Raw(string, s.TripID, s.StartStationNo, s.EndStationNo-1).Find(&seats).Error
+	//1.找到座位信息
+	var seats []TripSegment
+	string := "SELECT * FROM trip_segment WHERE trip_id = ? AND segment_no between ? AND ? AND seat_catogory = ?"
+	err := tx.Set("gorm:query_option", "FOR UPDATE").Raw(string, s.TripID, s.StartStationNo, s.EndStationNo-1, catogory).Find(&seats).Error
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
 	fmt.Println("座位：", seats)
+	//2计算出一个有效的座位号
 	validSeatNo, _ := calculasValidSeatNo(seats)
 	fmt.Println("选中的座位号", validSeatNo)
-	//2.下订单
-	//UserID，借助中间件.
-	order := Order{UserID: 1, TripID: s.TripID, StartStationNo: s.StartStationNo, EndStationNo: s.EndStationNo, SeatNo: validSeatNo, SeatCatogory: catogory, Date: time.Now(), Status: "未支付"}
-	fmt.Println("订单", order)
-	err = tx.Create(&order).Error
-	//3.commit
-	err = tx.Commit().Error
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
+	// //3 修改座位信息
+	// setZero(seats, validSeatNo)
+	// err = tx.Save(seats).Error
+	// if err != nil {
+	// 	tx.Rollback()
+	// 	return err
+	// }
+	// //4.下订单
+	// //UserID，借助中间件.
+	// order := Order{UserID: 1, TripID: s.TripID, StartStationNo: s.StartStationNo, EndStationNo: s.EndStationNo, SeatNo: validSeatNo, SeatCatogory: catogory, Date: time.Now(), Status: "未支付"}
+	// fmt.Println("订单", order)
+	// err = tx.Create(&order).Error
+	// //5.commit
+	// err = tx.Commit().Error
+	// if err != nil {
+	// 	tx.Rollback()
+	// 	return err
+	// }
 	return nil
 }
 
