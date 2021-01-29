@@ -41,11 +41,22 @@ func setZero(info []TripSegment, validSeatNo uint) {
 	if len(info) == 0 {
 		return
 	}
-	index := validSeatNo - 1>>3 //100号
+	index := (validSeatNo - 1) >> 3
 	pos := (validSeatNo - 1) % 8
 	//对每个区间更改
 	for i := 0; i < len(info); i++ {
-		info[i].SeatBytes[index] = info[i].SeatBytes[index] & ^(1 << pos)
+		info[i].SeatBytes[index] = info[i].SeatBytes[index] & ^(128 >> pos)
+	}
+}
+func setOne(info []TripSegment, validSeatNo uint) {
+	if len(info) == 0 {
+		return
+	}
+	index := (validSeatNo - 1) >> 3
+	pos := (validSeatNo - 1) % 8
+	//对每个区间更改
+	for i := 0; i < len(info); i++ {
+		info[i].SeatBytes[index] = info[i].SeatBytes[index] | (128 >> pos)
 	}
 }
 
@@ -68,13 +79,19 @@ func countOne(num []uint8) uint {
 func FirstOne(num []uint8) (uint, error) {
 	count := uint(1)
 	for i := 0; i < len(num); i++ {
+		x := uint8(128)
 		temp := num[i]
-		for j := 7; j <= 0; j-- {
-			if (1<<j)&temp != 0 {
+		for x != 0 {
+			if temp&x != 0 {
 				return count, nil
 			}
 			count++
+			x = x >> 1
 		}
 	}
 	return count, errors.New("没有余票了")
 }
+
+// u_int8_t x = 0x80;
+//     //cout<<(int)x<<endl;
+//     u_int8_t count=0;
