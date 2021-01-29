@@ -18,8 +18,10 @@ func CollectRoute(r *gin.Engine) *gin.Engine {
 	r.GET("/search/allstations/", stations.StationList)
 
 	//tickets
+	//查票
 	r.GET("/search/remainder/", tickets.TicketList)
-
+	//买票
+	r.GET("/buy/ticket/", tickets.TicketBuy)
 	//orders
 	//orders
 	r.PUT("/cancel/order/:id", orders.CancelTicket)

@@ -8,11 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//BuyTicket
-func BuyTicket(c *gin.Context) {
-
-}
-
 //CancelTicket
 func CancelTicket(c *gin.Context) {
 	id64, err := strconv.ParseUint(c.Param("id"), 10, 32)
@@ -22,10 +17,8 @@ func CancelTicket(c *gin.Context) {
 		return
 	}
 	orderModel := Order{ID: id}
-
 	err = orderModel.cancleOrder()
 	fmt.Print(err)
-
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"code": 422, "msg": "cancel order wrong"})
 		return

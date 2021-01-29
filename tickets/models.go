@@ -2,50 +2,21 @@ package tickets
 
 import (
 	"fmt"
+	"time"
 
 	"12306.com/12306/common"
-
-	_ "fmt"
 )
 
-//Ticket 这里的票对应，一个车次的多个连续区间，并不存在数据库表中
-type Ticket struct {
-	TripID         uint   `gorm:"column:trip_id"`
-	StartStationNo uint   `gorm:"column:start_station_no"`
-	EndStationNo   uint   `gorm:"column:end_station_no"`
-	StartStation   string `gorm:"column:start_station"`
-	EndStation     string `gorm:"column:end_station"`
+//TripSeries 一个车次的多个连续区间，没有直接对应的数据库表
+type TripSeries struct {
+	TripID         uint `gorm:"column:trip_id"`
+	StartStationNo uint `gorm:"column:start_station_no"` //StationNo为1代表是该车次的起始站
+	EndStationNo   uint `gorm:"column:end_station_no"`
+	// StartStation   string `gorm:"column:start_station"`
+	// EndStation     string `gorm:"column:end_station"`
 }
 
-//Trip 对应数据库表中的车次
-type Trip struct {
-	ID     uint   `gorm:"primary_key"`
-	TripID string `json:"trip_id"`
-	TripNo string `json:"Trip_No"`
-}
-
-//FindTicketList 根据相应的startCity, endCity,date 条件返回ticket列表
-func FindTicketList(startCity, endCity, date string) ([]Ticket, error) { //从数据库找到所有符合条件的车次
-	db := common.GetDB()
-	var models []Ticket
-	err := db.Raw("SELECT A.trip_id AS trip_id ,A.sequence AS start_station_no,B.sequence AS end_station_no FROM (SELECT trip_id,station_name,sequence FROM trip_station WHERE station_name =? AND date(start_time)=? ) A, (SELECT trip_id,station_name,sequence FROM trip_station WHERE station_name =? AND date(start_time)=? ) B WHERE A.sequence < B.sequence AND A.trip_id = B.trip_id ", startCity, date, endCity, date).Find(&models).Error
-	return models, err
-}
-
-//FindHishSpeedTicketList 根据相应的startCity, endCity, date条件返回高铁快车的ticket列表
-func FindHishSpeedTicketList(startCity, endCity, date string) ([]Ticket, error) { //从数据库找到所有符合条件的车次
-	db := common.GetDB()
-	var models []Ticket
-	err := db.Raw("SELECT A.trip_id ,A.sequence ,B.sequence FROM (SELECT trip_id,station_name,sequence FROM trip_station WHERE station_name =? AND date(start_time)=? ) A, (SELECT trip_id,station_name,sequence FROM trip_station WHERE station_name =? AND date(start_time)=? ) B WHERE A.sequence < B.sequence AND A.trip_id = B.trip_id ", startCity, date, endCity, date).Find(&models).Error
-	//返回
-	return models, err
-}
-
-// //getTrainDetail 对于给定的Ticket，查找对应的车次信息
-// func (self *Ticket) getTrainDetail() { //获取车次对应的列车的信息
-// }
-
-//RemainSeats 该结构体用于表示，对应给定的ticket结构体，它的各个座位类型的余票数
+//RemainSeats 该结构体用于表示，对应给定的TripSegment结构体，它的各个座位类型的余票数
 type RemainSeats struct {
 	BusinessSeats   uint `json:"businessSeatsNumber"`
 	FirstSeats      uint `json:"firstSeatsNumber"`
@@ -56,8 +27,52 @@ type RemainSeats struct {
 	SeniorSoftBerth uint `json:"seniorSoftBerthNumber"`
 }
 
-//SeatsBytes 该结构体用于表示，对应给定的ticket结构体，各个座位类型的原始二进制序列,直接对应数据库的二进制序列
-type SeatsBytes struct {
+//TripSegmentSeats 对应trip_segment的一行中的座位那一列
+type TripSegmentSeats struct {
+	Seats []uint8 `gorm:"column:seats"`
+}
+
+type Order struct {
+	ID             uint      `gorm:"primary_key;auto_increment" json:"id"`
+	TripID         uint      `json:"trip_id"`
+	StartStationNo uint      `json:"start_station_no"`
+	EndStationNo   uint      `json:"end_station_no"`
+	SeatNo         uint      `json:"seat_no"`
+	SeatCatogory   string    `json:"seat_catogory"`
+	UserID         uint      `json:"user_id"`
+	StartStation   string    `json:"startStation"`
+	EndStation     string    `json:"endStation"`
+	Date           time.Time `json:"date"`
+	Status         string    `json:"status"`
+}
+
+//Trip 对应数据库表中的车次
+// type Trip struct {
+// 	ID     uint   `gorm:"primary_key"`
+// 	TripID string `json:"trip_id"`
+// 	TripNo string `json:"Trip_No"`
+// }
+
+//FindTripSeriesList 根据相应的startCity, endCity,date 条件，返回TripSeries列表
+func FindTripSeriesList(startCity, endCity, date string) ([]TripSeries, error) { //从数据库找到所有符合条件的车次
+	db := common.GetDB()
+	var models []TripSeries
+	err := db.Raw("SELECT A.trip_id AS trip_id ,A.sequence AS start_station_no,B.sequence AS end_station_no FROM (SELECT trip_id,station_name,sequence FROM trip_station WHERE station_name =? AND date(start_time)=? ) A, (SELECT trip_id,station_name,sequence FROM trip_station WHERE station_name =? AND date(start_time)=? ) B WHERE A.sequence < B.sequence AND A.trip_id = B.trip_id ", startCity, date, endCity, date).Find(&models).Error
+	return models, err
+}
+
+//FindHishSpeedTripSeriesList 根据相应的startCity, endCity, date条件，返回高铁快车的TripSeries列表
+func FindHishSpeedTripSeriesList(startCity, endCity, date string) ([]TripSeries, error) { //从数据库找到所有符合条件的车次
+	db := common.GetDB()
+	var models []TripSeries
+	err := db.Raw("SELECT A.trip_id ,A.sequence ,B.sequence FROM (SELECT trip_id,station_name,sequence FROM trip_station WHERE station_name =? AND date(start_time)=? ) A, (SELECT trip_id,station_name,sequence FROM trip_station WHERE station_name =? AND date(start_time)=? ) B WHERE A.sequence < B.sequence AND A.trip_id = B.trip_id ", startCity, date, endCity, date).Find(&models).Error
+	//返回
+	return models, err
+}
+
+//TripSegment 对应trip_segment的一行
+type TripSegment struct {
+	ID              uint    `gorm:"column:id"`
 	TripID          uint    `gorm:"column:trip_id"`
 	SegmentNo       uint    `gorm:"column:segment_no"`
 	BusinessSeats   []uint8 `gorm:"column:business_seats"`
@@ -69,10 +84,19 @@ type SeatsBytes struct {
 	SeniorSoftBerth []uint8 `gorm:"column:senior_soft_berth"`
 }
 
-//getSeatDetail 对于给定的Ticket，查找对应的座位余量信息
-func (s *Ticket) getSeatDetail() RemainSeats { //获取票的座位余量信息
+//TripSegment1 对应trip_segment1的一行
+type TripSegment1 struct {
+	ID           uint    `gorm:"column:id"`
+	TripID       uint    `gorm:"column:trip_id"`
+	SegmentNo    uint    `gorm:"column:segment_no"`
+	SeatCatogory string  `gorm:"column:seat_catogory"`
+	SeatBytes    []uint8 `gorm:"column:seat_bytes"`
+}
+
+//getRemainSeats 对于给定的TripSeries，返回各个类型的座位的座位余量
+func (s *TripSeries) getRemainSeats() RemainSeats { //获取票的座位余量信息
 	db := common.GetDB()
-	var info []SeatsBytes
+	var info []TripSegment
 	// 批量读取
 	db.Raw("SELECT * FROM trip_segment WHERE trip_id = ? AND segment_no between ? AND ? ", s.TripID, s.StartStationNo, s.EndStationNo-1).Find(&info)
 	fmt.Println("座位：", info)
@@ -80,58 +104,86 @@ func (s *Ticket) getSeatDetail() RemainSeats { //获取票的座位余量信息
 	return res
 }
 
-//calculasRemainSeats 帮助计算余量，将TripSegmentbytes转化为RemainSeats
-func calculasRemainSeats(info []SeatsBytes) RemainSeats {
-	var resBytes SeatsBytes = info[0]
-	//对每个区间作与运算
-	for i := 1; i < len(info); i++ {
-		//计算BusinessSeats 经过与运算后的位图
-		for j := 0; j < len(resBytes.BusinessSeats); j++ {
-			resBytes.BusinessSeats[j] = resBytes.BusinessSeats[j] & info[i].BusinessSeats[j]
-		}
-		for j := 0; j < len(resBytes.FirstSeats); j++ {
-			resBytes.FirstSeats[j] = resBytes.FirstSeats[j] & info[i].FirstSeats[j]
-		}
-		for j := 0; j < len(resBytes.SecondSeats); j++ {
-			resBytes.SecondSeats[j] = resBytes.SecondSeats[j] & info[i].SecondSeats[j]
-		}
-		for j := 0; j < len(resBytes.HardSeats); j++ {
-			resBytes.HardSeats[j] = resBytes.HardSeats[j] & info[i].HardSeats[j]
-		}
-		for j := 0; j < len(resBytes.HardBerth); j++ {
-			resBytes.HardBerth[j] = resBytes.HardBerth[j] & info[i].HardBerth[j]
-		}
-		for j := 0; j < len(resBytes.SoftBerth); j++ {
-			resBytes.SoftBerth[j] = resBytes.SoftBerth[j] & info[i].SoftBerth[j]
-		}
-		for j := 0; j < len(resBytes.SeniorSoftBerth); j++ {
-			resBytes.SeniorSoftBerth[j] = resBytes.SeniorSoftBerth[j] & info[i].SeniorSoftBerth[j]
-		}
-		fmt.Println("与运算后bytes", resBytes)
+//OrderOneSeat 对于给定的TripSeries和座位类型，找到一个有效的座位号并下订单
+func (s *TripSeries) orderOneSeat(catogory string) error {
+	db := common.GetDB()
+	tx := db.Begin()
+	//1.找到一个有效的座位号validSeatNo
+	var seats []TripSegmentSeats
+	string := "SELECT " + catogory + " AS seats FROM trip_segment WHERE trip_id = ? AND segment_no between ? AND ? "
+	err := tx.Set("gorm:query_option", "FOR UPDATE").Raw(string, s.TripID, s.StartStationNo, s.EndStationNo-1).Find(&seats).Error
+	if err != nil {
+		tx.Rollback()
+		return err
 	}
-	var res RemainSeats
-	res.BusinessSeats = countOne(resBytes.BusinessSeats)
-	res.FirstSeats = countOne(resBytes.FirstSeats)
-	res.SecondSeats = countOne(resBytes.SecondSeats)
-	res.HardSeats = countOne(resBytes.HardSeats)
-	res.HardBerth = countOne(resBytes.HardBerth)
-	res.SoftBerth = countOne(resBytes.SoftBerth)
-	res.SeniorSoftBerth = countOne(resBytes.SeniorSoftBerth)
-	fmt.Println("最终结果：", res)
-	return res
+	fmt.Println("座位：", seats)
+	validSeatNo, _ := calculasValidSeatNo(seats)
+	fmt.Println("选中的座位号", validSeatNo)
+	//2.下订单
+	//UserID，借助中间件.
+	order := Order{UserID: 1, TripID: s.TripID, StartStationNo: s.StartStationNo, EndStationNo: s.EndStationNo, SeatNo: validSeatNo, SeatCatogory: catogory, Date: time.Now(), Status: "未支付"}
+	fmt.Println("订单", order)
+	err = tx.Create(&order).Error
+	//3.commit
+	err = tx.Commit().Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	return nil
 }
 
-//countOne 帮助计算余量
-func countOne(num []uint8) uint {
-	count := uint(0)
-	for i := 0; i < len(num); i++ {
-		temp := num[i]
-		for temp != 0 {
-			if temp%2 != 0 {
-				count++
-			}
-			temp /= 2
-		}
-	}
-	return count
-}
+// func (s *TripSeries) cancleOrder(orderID uint) error {
+// 	db := common.GetDB()
+// 	tx := db.Begin()
+// 	// 0.取得订单信息，并锁住订单表的该行；
+// 	order := Order{}
+// 	err := tx.Set("gorm:query_option", "FOR UPDATE").First(&order, orderID).Error
+// 	if err != nil {
+// 		tx.Rollback()
+// 		return err
+// 	}
+// 	// 1.判断该订单状态是否支持退票
+// 	if !(order.Status == "未支付" || order.Status == "已支付") {
+// 		tx.Rollback()
+// 		return errors.New("订单状态错误,不支持退票")
+// 	}
+// 	// 2.判断下单的用户是不是登录用户本人，借助中间件
+// 	// 3.退钱给用户
+// 	if order.Status == "已支付" {
+// 		fmt.Print("退钱给用户")
+// 	}
+// 	// 3.修改座位信息
+// 	var seats TripSegmentSeats
+// 	for i := order.EndStationNo; i < order.StartStationNo; i++ {
+// 		string := "SELECT " + order.SeatCatogory + " AS seats FROM trip_segment WHERE trip_id = ? AND segment_no ="
+// 		err = tx.Set("gorm:query_option", "FOR UPDATE").Raw(string, s.TripID, i).Find(seats).Error
+// 		fmt.Println("座位：", seats)
+// 		newSeats, err := modify(seats, order.SeatNo)
+// 		fmt.Println("新的座位：", newSeats)
+// 		err = tx.Model(&order).Updates(map[string]interface{}{"status": "已退票"}).Error
+// 	}
+// 	// err = tx.Table("trip_seat").Where("trip_id = ? AND segment between ? AND ? and seat_id = ?", order.TripID, order.StartNo, order.EndNo-1, order.SeatID).Updates(map[string]interface{}{"status": 0}).Error
+// 	if err != nil {
+// 		tx.Rollback()
+// 		return err
+// 	}
+
+// 	if err != nil {
+// 		tx.Rollback()
+// 		return err
+// 	}
+// 	// 4.更新订单状态
+// 	err = tx.Model(&order).Updates(map[string]interface{}{"status": "已退票"}).Error
+// 	if err != nil {
+// 		tx.Rollback()
+// 		return err
+// 	}
+// 	// 5.commit
+// 	err = tx.Commit().Error
+// 	if err != nil {
+// 		tx.Rollback()
+// 		return err
+// 	}
+// 	return nil
+// }

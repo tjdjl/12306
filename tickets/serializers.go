@@ -10,7 +10,7 @@ import (
 // 	"github.com/gin-gonic/gin"
 // )
 
-type TicketResponse struct {
+type TicketListResponse struct {
 	TripID                uint      `json:"trainNumber"`
 	StartStationNo        uint      `json:"startStationNo"`
 	EndStationNo          uint      `json:"endStationNo"`
@@ -28,21 +28,21 @@ type TicketResponse struct {
 	SoftBerthNumber       uint      `json:"softBerthNumber"`
 	SeniorSoftBerthNumber uint      `json:"seniorSoftBerthNumber"`
 }
-type TicketsSerializer struct {
+type TicketListSerializer struct {
 	C       *gin.Context
-	Tickets []Ticket
+	Tickets []TripSeries
 }
 
-func (s *TicketsSerializer) Response() []TicketResponse {
-	response := []TicketResponse{}
+func (s *TicketListSerializer) Response() []TicketListResponse {
+	response := []TicketListResponse{}
 	for _, ticket := range s.Tickets {
-		seatNumbers := ticket.getSeatDetail()
-		temp := TicketResponse{
-			TripID:                ticket.TripID,
-			StartStationNo:        ticket.StartStationNo,
-			EndStationNo:          ticket.EndStationNo,
-			StartStation:          ticket.StartStation,
-			EndStation:            ticket.EndStation,
+		seatNumbers := ticket.getRemainSeats()
+		temp := TicketListResponse{
+			TripID:         ticket.TripID,
+			StartStationNo: ticket.StartStationNo,
+			EndStationNo:   ticket.EndStationNo,
+			// StartStation:          ticket.StartStation,
+			// EndStation:            ticket.EndStation,
 			BusinessSeatsNumber:   seatNumbers.BusinessSeats,
 			FirstSeatsNumber:      seatNumbers.FirstSeats,
 			SecondSeatsNumber:     seatNumbers.SecondSeats,
