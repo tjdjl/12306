@@ -14,18 +14,22 @@
 -- 导出  表 12306.orders 结构
 CREATE TABLE IF NOT EXISTS `orders` (
   `id` int(255) unsigned NOT NULL AUTO_INCREMENT,
-  `order_id` varchar(255) DEFAULT NULL,
-  `trip_id` int(10) unsigned DEFAULT NULL COMMENT '车次id',
   `user_id` int(10) unsigned DEFAULT NULL COMMENT '用户id',
-  `seat_id` int(10) unsigned DEFAULT NULL COMMENT '座位id',
-  `start_no` int(10) unsigned DEFAULT NULL COMMENT '开始站点号',
-  `end_no` int(10) unsigned DEFAULT NULL COMMENT '结束站点号',
+  `seat_no` int(10) unsigned DEFAULT NULL COMMENT '座位id',
+  `start_station_no` int(10) unsigned DEFAULT NULL COMMENT '开始站点号',
+  `end_station_no` int(10) unsigned DEFAULT NULL COMMENT '结束站点号',
   `start_station` varchar(255) DEFAULT NULL COMMENT '开始站点名字',
   `end_station` varchar(255) DEFAULT NULL COMMENT '结束站点名字',
   `date` datetime DEFAULT NULL COMMENT '车票日期',
   `status` varchar(255) DEFAULT NULL COMMENT '状态',
+  `order_id` varchar(255) DEFAULT NULL,
+  `trip_id` int(10) unsigned DEFAULT NULL,
+  `seat_id` int(10) unsigned DEFAULT NULL,
+  `start_no` int(10) unsigned DEFAULT NULL,
+  `end_no` int(10) unsigned DEFAULT NULL,
+  `seat_catogory` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8;
 
 -- 数据导出被取消选择。
 
@@ -80,6 +84,18 @@ CREATE TABLE IF NOT EXISTS `trip_price` (
 
 -- 数据导出被取消选择。
 
+-- 导出  表 12306.trip_seat 结构
+CREATE TABLE IF NOT EXISTS `trip_seat` (
+  `id` int(11) DEFAULT NULL,
+  `trip_id` int(11) DEFAULT NULL,
+  `seat_catogory` varchar(50) DEFAULT NULL,
+  `seat_no` int(11) DEFAULT NULL COMMENT '从1开始',
+  `seat_name` varchar(50) DEFAULT NULL COMMENT '比如12A，表示12排的A座位号',
+  KEY `id` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- 数据导出被取消选择。
+
 -- 导出  表 12306.trip_seat_segment 结构
 CREATE TABLE IF NOT EXISTS `trip_seat_segment` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
@@ -97,13 +113,8 @@ CREATE TABLE IF NOT EXISTS `trip_segment` (
   `id` int(11) DEFAULT NULL,
   `trip_id` int(11) DEFAULT NULL,
   `segment_no` int(5) DEFAULT NULL,
-  `business_seats` varbinary(500) DEFAULT NULL,
-  `first_seats` varbinary(500) DEFAULT NULL,
-  `second_seats` varbinary(500) DEFAULT NULL,
-  `no_satas` varbinary(500) DEFAULT NULL,
-  `hard_berth` varbinary(500) DEFAULT NULL,
-  `soft_berth` varbinary(500) DEFAULT NULL,
-  `senior_soft_berth` varbinary(500) DEFAULT NULL,
+  `seat_bytes` varbinary(500) DEFAULT NULL,
+  `seat_catogory` varchar(50) DEFAULT NULL,
   KEY `索引 1` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
