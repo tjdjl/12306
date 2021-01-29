@@ -26,7 +26,7 @@ func ListTicket(c *gin.Context) {
 		tripSeries, err = FindHishSpeedTripSeriesList(startCity, endCity, date) //找到对应的车次
 	}
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"code": 422, "msg": "Invalid param"})
+		c.JSON(http.StatusNotFound, gin.H{"code": 422, "msg": err.Error()})
 		return
 	}
 	serializer := TicketListSerializer{c, tripSeries}                                     //新建序列化器
@@ -43,7 +43,7 @@ func BuyTicket(c *gin.Context) {
 	tripSegment := TripSeries{uint(tripID), uint(startStationNo), uint(endStationNo)}
 	err := tripSegment.orderOneSeat(seatCategory) //找到空闲的座位号；
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"code": 422, "msg": "Invalid param"})
+		c.JSON(http.StatusNotFound, gin.H{"code": 422, "msg": err.Error()})
 		return
 	}
 	// serializer := TicketsSerializer{c, TicketsModel}                                      //新建序列化器
@@ -62,7 +62,7 @@ func CancelTicket(c *gin.Context) {
 	err = tripSegment.cancleOrder(id)
 	fmt.Print(err)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"code": 422, "msg": "cancel order wrong"})
+		c.JSON(http.StatusNotFound, gin.H{"code": 422, "msg": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "退票成功", "data": ""})

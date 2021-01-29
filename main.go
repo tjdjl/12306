@@ -4,8 +4,8 @@ import (
 	"os"
 
 	"12306.com/12306/common"
-	"12306.com/12306/orders"
 	"12306.com/12306/stations"
+	"12306.com/12306/tickets"
 	"12306.com/12306/users"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
@@ -17,9 +17,7 @@ func main() {
 	db := common.InitDB()
 	db.AutoMigrate(&users.User{})
 	db.AutoMigrate(&stations.Station{})
-	db.AutoMigrate(&orders.Order{})
-	// myNum := []uint{255, 255}
-	// db.Table("trip_segment").Where("trip_id = 20 AND segment_no between 1 AND 2").Updates(map[string]interface{}{"second_seats": myNum})
+	db.AutoMigrate(&tickets.Order{})
 
 	defer db.Close()
 
