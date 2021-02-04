@@ -18,12 +18,12 @@ func ListTicket(c *gin.Context) {
 	endCity := c.Query("endCity")
 	date := c.Query("date")
 	category := c.Query("type")
-	var tripSeries []TripSeries
+	var tripSeries []TripStartNoAndEndNo
 	var err error
 	if category == "1" {
-		tripSeries, err = FindTripSeriesList(startCity, endCity, date) //找到对应的车次
+		tripSeries, err = FindTripStartAndEndList(startCity, endCity, date) //找到对应的车次
 	} else {
-		tripSeries, err = FindHishSpeedTripSeriesList(startCity, endCity, date) //找到对应的车次
+		tripSeries, err = FindHighSpeedTripStartAndEndList(startCity, endCity, date) //找到对应的车次
 	}
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"code": 422, "msg": err.Error()})
@@ -37,10 +37,9 @@ func ListTicket(c *gin.Context) {
 func BuyTicket(c *gin.Context) {
 	tripID, _ := strconv.Atoi(c.Query("tripID"))
 	startStationNo, _ := strconv.Atoi(c.Query("startStationNo"))
-
 	endStationNo, _ := strconv.Atoi(c.Query("endStationNo"))
 	seatCategory := c.Query("seatCategory")
-	tripSegment := TripSeries{uint(tripID), uint(startStationNo), uint(endStationNo)}
+	tripSegment := TripStartNoAndEndNo{uint(tripID), uint(startStationNo), uint(endStationNo)}
 	err := tripSegment.orderOneSeat(seatCategory) //找到空闲的座位号；
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"code": 422, "msg": err.Error()})
@@ -58,7 +57,7 @@ func CancelTicket(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"code": 422, "msg": "Invalid id"})
 		return
 	}
-	tripSegment := TripSeries{}
+	tripSegment := TripStartNoAndEndNo{}
 	err = tripSegment.cancleOrder(id)
 	fmt.Print(err)
 	if err != nil {

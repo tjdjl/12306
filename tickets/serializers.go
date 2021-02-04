@@ -10,45 +10,68 @@ import (
 // 	"github.com/gin-gonic/gin"
 // )
 
+//TicketListResponse 查票的响应格式
 type TicketListResponse struct {
-	TripID                uint      `json:"trainNumber"`
-	StartStationNo        uint      `json:"startStationNo"`
-	EndStationNo          uint      `json:"endStationNo"`
-	StartStation          string    `json:"startStation"`
-	EndStation            string    `json:"endStation"`
-	StartTime             time.Time `json:"startTime"`
-	ArrivalTime           time.Time `json:"arrivalTime"`
-	StartStationType      uint      `json:"startStationType"`
-	EndStationType        uint      `json:"endStationType"`
-	BusinessSeatsNumber   uint      `json:"businessSeatsNumber"`
-	FirstSeatsNumber      uint      `json:"firstSeatsNumber"`
-	SecondSeatsNumber     uint      `json:"secondSeatsNumber"`
-	HardSeatsNumber       uint      `json:"hardSeatsNumber"`
-	HardBerthNumber       uint      `json:"hardBerthNumber"`
-	SoftBerthNumber       uint      `json:"softBerthNumber"`
-	SeniorSoftBerthNumber uint      `json:"seniorSoftBerthNumber"`
+	// TripID                uint      `json:"trip_id"`
+	// StartStationNo        uint      `json:"leave_station_no"`
+	// EndStationNo          uint      `json:"arrival_station_no"`
+	TrainNumber           string        `json:"train_number"` // 列车字符串
+	LeaveStation          string        `json:"leave_station"`
+	ArriveStation         string        `json:"arrival_station"`
+	LeaveTime             time.Time     `json:"leave_time"`
+	ArrivalTime           time.Time     `json:"arrival_time"`
+	TravelTime            time.Duration `json:"travel_time"` //耗时,"7小时13分"
+	LeaveStationType      string        `json:"leave_station_type"`
+	ArriveStationType     string        `json:"arrival_station_type"`
+	TrainType             string        `json:"train_type"` // 列车类型
+	BusinessSeatsNumber   uint          `json:"business_seats_number"`
+	FirstSeatsNumber      uint          `json:"first_seats_number"`
+	SecondSeatsNumber     uint          `json:"second_seats_number"`
+	NoSeatsNumber         uint          `json:"no_seats_number"`
+	HardSeatsNumber       uint          `json:"hard_seats_number"`
+	HardBerthNumber       uint          `json:"hard_berth_number"`
+	SoftBerthNumber       uint          `json:"soft_berth_number"`
+	SeniorSoftBerthNumber uint          `json:"senior_soft_berth_number"`
 }
 type TicketListSerializer struct {
-	C       *gin.Context
-	Tickets []TripSeries
+	C                    *gin.Context
+	TripStartAndEndSlice []TripStartNoAndEndNo
 }
 
 func (s *TicketListSerializer) Response() []TicketListResponse {
 	response := []TicketListResponse{}
-	for _, ticket := range s.Tickets {
+	for _, tripStartAndEnd := range s.TripStartAndEndSlice {
+		train := tripStartAndEnd.getTrainDetail()
+		station := tripStartAndEnd.getStationDetail()
+		var leaveStationType, arriveStationType string
+		if tripStartAndEnd.StartStationNo == uint(1) {
+			leaveStationType = "始"
+		} else {
+			leaveStationType = "过"
+		}
+		if tripStartAndEnd.EndStationNo == train.Length {
+			arriveStationType = "终"
+		} else {
+			arriveStationType = "过"
+		}
 		temp := TicketListResponse{
-			TripID:         ticket.TripID,
-			StartStationNo: ticket.StartStationNo,
-			EndStationNo:   ticket.EndStationNo,
-			// StartStation:          ticket.StartStation,
-			// EndStation:            ticket.EndStation,
-			BusinessSeatsNumber:   ticket.getRemainSeats("BusinessSeat"),
-			FirstSeatsNumber:      ticket.getRemainSeats("FirstSeat"),
-			SecondSeatsNumber:     ticket.getRemainSeats("SecondSeat"),
-			HardSeatsNumber:       ticket.getRemainSeats("HardSeats"),
-			HardBerthNumber:       ticket.getRemainSeats("HardBerth"),
-			SoftBerthNumber:       ticket.getRemainSeats("SoftBerth"),
-			SeniorSoftBerthNumber: ticket.getRemainSeats("SeniorSoftBerth"),
+			TrainNumber:           train.TrainNumber,
+			LeaveStation:          station[0].StationName,
+			ArriveStation:         station[1].StationName,
+			LeaveTime:             station[0].StationTime,
+			ArrivalTime:           station[1].StationTime,
+			TravelTime:            station[1].StationTime.Sub(station[0].StationTime),
+			LeaveStationType:      leaveStationType,
+			ArriveStationType:     arriveStationType,
+			TrainType:             train.Catogory,
+			BusinessSeatsNumber:   tripStartAndEnd.getRemainSeats("BusinessSeat"),
+			FirstSeatsNumber:      tripStartAndEnd.getRemainSeats("FirstSeat"),
+			SecondSeatsNumber:     tripStartAndEnd.getRemainSeats("SecondSeat"),
+			NoSeatsNumber:         tripStartAndEnd.getRemainSeats("NoSeat"),
+			HardSeatsNumber:       tripStartAndEnd.getRemainSeats("HardSeats"),
+			HardBerthNumber:       tripStartAndEnd.getRemainSeats("HardBerth"),
+			SoftBerthNumber:       tripStartAndEnd.getRemainSeats("SoftBerth"),
+			SeniorSoftBerthNumber: tripStartAndEnd.getRemainSeats("SeniorSoftBerth"),
 		}
 		response = append(response, temp)
 	}
