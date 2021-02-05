@@ -1,7 +1,6 @@
 package tickets
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -18,51 +17,53 @@ func ListTicket(c *gin.Context) {
 	endCity := c.Query("endCity")
 	date := c.Query("date")
 	category := c.Query("type")
-	var tripSeries []TripStartNoAndEndNo
+	var models []TripStaionPair
 	var err error
 	if category == "1" {
-		tripSeries, err = FindTripStartAndEndList(startCity, endCity, date) //找到对应的车次
+		models, err = FindTripStaionPairList(startCity, endCity, date)
 	} else {
-		tripSeries, err = FindHighSpeedTripStartAndEndList(startCity, endCity, date) //找到对应的车次
+		models, err = FindFastTripStaionPairList(startCity, endCity, date)
 	}
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"code": 422, "msg": err.Error()})
 		return
 	}
-	serializer := TicketListSerializer{c, tripSeries}                                     //新建序列化器
+	serializer := TicketListSerializer{c, models}                                         //新建序列化器
 	c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "查找成功", "data": serializer.Response()}) //返回结果
 }
 
 // BuyTicket 买票
 func BuyTicket(c *gin.Context) {
-	tripID, _ := strconv.Atoi(c.Query("tripID"))
-	startStationNo, _ := strconv.Atoi(c.Query("startStationNo"))
-	endStationNo, _ := strconv.Atoi(c.Query("endStationNo"))
+	tripID, err := strconv.ParseUint(c.Query("tripID"), 10, 32)
+	startStationNo, err := strconv.ParseUint(c.Query("startStationNo"), 10, 32)
+	endStationNo, err := strconv.ParseUint(c.Query("endStationNo"), 10, 32)
 	seatCategory := c.Query("seatCategory")
-	tripSegment := TripStartNoAndEndNo{uint(tripID), uint(startStationNo), uint(endStationNo)}
-	err := tripSegment.orderOneSeat(seatCategory) //找到空闲的座位号；
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"code": 422, "msg": err.Error()})
 		return
 	}
-	// serializer := TicketsSerializer{c, TicketsModel}                                      //新建序列化器
-	c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "成功"}) //返回结果
+	trip := Trip{uint(tripID)}
+	err = trip.orderOneSeat(uint(startStationNo), uint(endStationNo), seatCategory) //找到空闲的座位号；
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"code": 422, "msg": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "买票成功"}) //返回结果
 }
 
 //CancelTicket 退票
 func CancelTicket(c *gin.Context) {
-	id64, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	id64, err := strconv.ParseUint(c.Query("ticket_outside_id"), 10, 32)
 	id := uint(id64)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"code": 422, "msg": "Invalid id"})
 		return
 	}
-	tripSegment := TripStartNoAndEndNo{}
-	err = tripSegment.cancleOrder(id)
-	fmt.Print(err)
+	trip := Trip{}
+	err = trip.cancleOrder(id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"code": 422, "msg": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "退票成功", "data": ""})
+	c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "退票成功"})
 }

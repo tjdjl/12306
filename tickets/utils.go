@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-//calculasRemainSeats 帮助计算余量，将TripSegmentbytes转化为RemainSeats
+//calculasRemainSeats 计算余量
 func calculasRemainSeats(info []TripSegment) uint {
 	if len(info) == 0 {
 		return 0
@@ -16,24 +16,26 @@ func calculasRemainSeats(info []TripSegment) uint {
 		for j := 0; j < len(resBytes); j++ {
 			resBytes[j] = resBytes[j] & info[i].SeatBytes[j]
 		}
-		fmt.Println("与运算后bytes", resBytes)
+		// fmt.Println("与运算后bytes", resBytes)
 	}
 	res := countOne(resBytes)
-	fmt.Println("最终结果：", res)
+	// fmt.Println("最终结果：", res)
 	return res
 }
 func calculasValidSeatNo(info []TripSegment) (uint, error) {
 	if len(info) == 0 {
 		return 0, errors.New("没有余票了")
 	}
-	resBytes := info[0].SeatBytes
+	resBytes := make([]uint8, len(info[0].SeatBytes))
+	copy(resBytes, info[0].SeatBytes)
+	fmt.Println(resBytes)
 	//对每个区间作与运算
 	for i := 1; i < len(info); i++ {
 		//计算Seats 经过与运算后的位图
 		for j := 0; j < len(resBytes); j++ {
 			resBytes[j] = resBytes[j] & info[i].SeatBytes[j]
 		}
-		fmt.Println("与运算后bytes", resBytes)
+		// fmt.Println("与运算后bytes", resBytes)
 	}
 	return FirstOne(resBytes)
 }
