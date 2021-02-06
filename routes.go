@@ -14,15 +14,15 @@ func CollectRoute(r *gin.Engine) *gin.Engine {
 	// r.GET("/api/auth/info", users.AuthMiddleware(), users.Info)
 
 	//stations
-	r.GET("/search/allstations/", stations.StationList)
+	r.GET("/search/v1/queryAllStations/", stations.StationList)
 
 	//tickets
 	//查票
 	r.GET("/search/remainder/", tickets.ListTicket)
 	//买票
 	r.GET("/buy/ticket/", tickets.BuyTicket)
-	//退票
-	r.PUT("/cancel/order/", tickets.CancelTicket)
+	// //退票
+	r.PUT("/reticket/api/v1/", tickets.CancelTicket)
 	// r.PUT("/change/order/", orders.ChangeTicket)
 
 	return r

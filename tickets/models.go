@@ -3,48 +3,53 @@ package tickets
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 )
 
-//TripStaionPair 一个trip的多个连续区间，没有直接对应的数据库表
-type TripStaionPair struct {
+//TrainStaionPair 一个trip的多个连续区间，没有直接对应的数据库表
+type TrainStaionPair struct {
 	StartStationNo   uint   `gorm:"column:start_station_no"` //StationNo为1代表是该车次的起始站
 	EndStationNo     uint   `gorm:"column:end_station_no"`
 	StartStationName string `gorm:"column:start_station_name"`
 	EndStationName   string `gorm:"column:end_station_name"`
 	StartTime        string `gorm:"column:start_time"`
 	EndTime          string `gorm:"column:end_time"`
-	TrainNumber      string `gorm:"column:train_number"`
+	TrainID          string `gorm:"column:train_id"`
 	TrainType        string `gorm:"column:train_type"`
 	TrainStationNums uint   `gorm:"column:train_staion_nums"`
-	TripID           uint   `gorm:"column:trip_id"`
 }
 
-// // Train 对应数据库表中的train
-// type Train struct {
-// 	Catogory    string `gorm:"column:catogory"`
-// 	TrainNumber string `gorm:"column:train_number"`
-// 	Length      uint   `gorm:"column:length"`
-// }
-
-//FindTripStaionPairList 根据相应的startCity, endCity,date 条件，返回TripStaionPair列表
-func FindTripStaionPairList(startCity, endCity, date string) ([]TripStaionPair, error) {
+//FindTrainStaionPairList 根据相应的startCity, endCity,date 条件，返回TripStaionPair列表
+func FindTrainStaionPairList(startCity, endCity, date string, isFast bool) ([]TrainStaionPair, error) {
+	//取得城市id
 	repository := NewTicketRepository()
-	models, err := repository.FindTripStationPair(startCity, endCity, date)
-	return models, err
-}
+	startCityID, err := repository.FindCityID(startCity)
+	endCityID, err := repository.FindCityID(endCity)
+	if err != nil {
+		return nil, err
 
-//FindFastTripStaionPairList 根据相应的startCity, endCity, date条件，返回高铁快车的TripStaionPair列表
-func FindFastTripStaionPairList(startCity, endCity, date string) ([]TripStaionPair, error) {
-	repository := NewTicketRepository()
-	models, err := repository.FindFastTripStationPair(startCity, endCity, date)
+	}
+	//拼接成TripStationPairId
+	s1 := strconv.FormatUint(uint64(startCityID), 10)
+	s2 := strconv.FormatUint(uint64(endCityID), 10)
+	id := s1 + "-" + s2 + "-" + "%"
+	fmt.Println(id)
+	// 判断是否是今天
+	now := time.Now()
+	nowDate := now.Format("2006-01-02")
+	isToday := false
+	if date == nowDate {
+		isToday = true
+	}
+	models, err := repository.FindTripStationPair(id, date, isToday, isFast)
 	return models, err
 }
 
 //TripSegment 对应TripSegment表
 type TripSegment struct {
-	ID           uint    `gorm:"primary_key;column:id"` //StationNo为1代表是该车次的起始站
-	SegmentNo    uint    `gorm:"primary_key;column:segment_no"`
+	ID uint `gorm:"primary_key;column:id"` //StationNo为1代表是该车次的起始站
+	// SegmentNo    uint    `gorm:"primary_key;column:segment_no"`
 	SeatCatogory string  `gorm:"column:seat_catogory"`
 	SeatBytes    []uint8 `gorm:"column:seat_bytes"`
 }
@@ -56,20 +61,30 @@ func (TripSegment) TableName() string {
 
 //Trip 一个trip的多个连续区间，没有直接对应的数据库表
 type Trip struct {
-	TripID uint `gorm:"column:trip_id"`
+	TripID string
 }
 
-//getRemainSeats 对于给定的TripStartNoAndEndNo，根据座位类型,返回座位余量
-func (s *Trip) getRemainSeats(startStationNo, endStationNo uint, catogory string) uint { //获取票的座位余量信息
+//getRemainSeats 返回座位余量
+func (s *Trip) getRemainSeats(startStationNo, endStationNo uint) *map[string]uint { //获取票的座位余量信息
+	var resMap map[string]uint
+	resMap = make(map[string]uint)
 	repository := NewTicketRepository()
-	seats, err := repository.FindTripSegment(s.TripID, startStationNo, endStationNo, catogory)
+	//repository找到对应的TripSegment记录
+	seats, err := repository.FindTripSegment(s.TripID, startStationNo, endStationNo)
 	if err != nil {
-		return 0
+		return &resMap
 	}
 	fmt.Println("查询到的原始座位位图：")
 	for i := 0; i < len(seats); i++ {
+		if i > 1 && seats[i].SeatCatogory != seats[i-1].SeatCatogory {
+			fmt.Printf("\n")
+		}
+		if i == 0 || (i > 1 && seats[i].SeatCatogory != seats[i-1].SeatCatogory) {
+			fmt.Printf("\n%s", seats[i].SeatCatogory)
+		}
 		fmt.Printf("%b", seats[i].SeatBytes)
 	}
+	//对TripSegment记录进行计算
 	res := calculasRemainSeats(seats)
 	fmt.Printf("\n")
 	fmt.Println("计算得到的余量:", res)
@@ -79,7 +94,7 @@ func (s *Trip) getRemainSeats(startStationNo, endStationNo uint, catogory string
 //Order 对应订单表
 type Order struct {
 	ID             uint      `gorm:"primary_key;auto_increment" json:"id"`
-	TripID         uint      `json:"trip_id"`
+	TripID         string    `json:"trip_id"`
 	StartStationNo uint      `json:"start_station_no"`
 	EndStationNo   uint      `json:"end_station_no"`
 	SeatNo         uint      `json:"seat_no"`
@@ -139,9 +154,15 @@ func (s *Trip) orderOneSeat(startStationNo, endStationNo uint, catogory string) 
 		repository.Rollback()
 		return err
 	}
+	//处理候补
+	// s.handelCandidate(startStationNo, endStationNo)
 	return nil
 }
 
+// // 寻找有没有合适的候补，有的话，更改x表、and座位表。
+// func (s *Trip) handelCandidate(startStationNo, endStationNo uint) {
+
+// }
 func (s *Trip) cancleOrder(orderID uint) error {
 	repository := NewTicketRepositoryTX()
 	// repository.

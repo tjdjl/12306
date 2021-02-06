@@ -32,14 +32,15 @@ type TicketListResponse struct {
 }
 type TicketListSerializer struct {
 	C               *gin.Context
-	TripStaionPairs []TripStaionPair
+	TripStaionPairs []TrainStaionPair
+	date            string
 }
 
 func (s *TicketListSerializer) Response() []TicketListResponse {
 	response := []TicketListResponse{}
 	for _, tripStaionPair := range s.TripStaionPairs {
-		leaveTime, _ := time.ParseInLocation("2006-01-02 15:04:05", tripStaionPair.StartTime, time.Local)
-		arriveTime, _ := time.ParseInLocation("2006-01-02 15:04:05", tripStaionPair.EndTime, time.Local)
+		leaveTime, _ := time.ParseInLocation("15:04:05", tripStaionPair.StartTime, time.Local)
+		arriveTime, _ := time.ParseInLocation("15:04:05", tripStaionPair.EndTime, time.Local)
 		var leaveStationType, arriveStationType string
 		if tripStaionPair.StartStationNo == uint(1) {
 			leaveStationType = "始"
@@ -51,25 +52,28 @@ func (s *TicketListSerializer) Response() []TicketListResponse {
 		} else {
 			arriveStationType = "过"
 		}
-		tripID := Trip{tripStaionPair.TripID}
+
+		trip := Trip{tripStaionPair.TrainID + "-" + s.date}
+		remainSeats := trip.getRemainSeats(tripStaionPair.StartStationNo, tripStaionPair.EndStationNo)
+
 		temp := TicketListResponse{
-			TrainNumber:         tripStaionPair.TrainNumber,
-			LeaveStation:        tripStaionPair.StartStationName,
-			ArriveStation:       tripStaionPair.EndStationName,
-			LeaveTime:           tripStaionPair.StartTime,
-			ArrivalTime:         tripStaionPair.EndTime,
-			TravelTime:          arriveTime.Sub(leaveTime).String(),
-			LeaveStationType:    leaveStationType,
-			ArriveStationType:   arriveStationType,
-			TrainType:           tripStaionPair.TrainType,
-			BusinessSeatsNumber: tripID.getRemainSeats(tripStaionPair.StartStationNo, tripStaionPair.EndStationNo, "BusinessSeat"),
-			// FirstSeatsNumber:      tripID.getRemainSeats(tripStaionPair.StartStationNo, tripStaionPair.EndStationNo, "FirstSeat"),
-			// SecondSeatsNumber:     tripID.getRemainSeats(tripStaionPair.StartStationNo, tripStaionPair.EndStationNo, "SecondSeat"),
-			// NoSeatsNumber:         tripID.getRemainSeats(tripStaionPair.StartStationNo, tripStaionPair.EndStationNo, "NoSeat"),
-			// HardSeatsNumber:       tripID.getRemainSeats(tripStaionPair.StartStationNo, tripStaionPair.EndStationNo, "HardSeats"),
-			// HardBerthNumber:       tripID.getRemainSeats(tripStaionPair.StartStationNo, tripStaionPair.EndStationNo, "HardBerth"),
-			// SoftBerthNumber:       tripID.getRemainSeats(tripStaionPair.StartStationNo, tripStaionPair.EndStationNo, "SoftBerth"),
-			// SeniorSoftBerthNumber: tripID.getRemainSeats(tripStaionPair.StartStationNo, tripStaionPair.EndStationNo, "SeniorSoftBerth"),
+			TrainNumber:           tripStaionPair.TrainID,
+			LeaveStation:          tripStaionPair.StartStationName,
+			ArriveStation:         tripStaionPair.EndStationName,
+			LeaveTime:             tripStaionPair.StartTime,
+			ArrivalTime:           tripStaionPair.EndTime,
+			TravelTime:            arriveTime.Sub(leaveTime).String(),
+			LeaveStationType:      leaveStationType,
+			ArriveStationType:     arriveStationType,
+			TrainType:             tripStaionPair.TrainType,
+			BusinessSeatsNumber:   (*remainSeats)["BusinessSeat"],
+			FirstSeatsNumber:      (*remainSeats)["FirstSeat"],
+			SecondSeatsNumber:     (*remainSeats)["SecondSeat"],
+			NoSeatsNumber:         (*remainSeats)["NoSeat"],
+			HardSeatsNumber:       (*remainSeats)["HardSeats"],
+			HardBerthNumber:       (*remainSeats)["HardBerth"],
+			SoftBerthNumber:       (*remainSeats)["SoftBerth"],
+			SeniorSoftBerthNumber: (*remainSeats)["SeniorSoftBerth"],
 		}
 		response = append(response, temp)
 	}

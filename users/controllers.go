@@ -1,12 +1,13 @@
 package users
 
 import (
+	"log"
+	"net/http"
+
 	"12306.com/12306/common"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
-	"log"
-	"net/http"
 )
 
 func Register(ctx *gin.Context) {
@@ -32,9 +33,9 @@ func Register(ctx *gin.Context) {
 		common.Response(ctx, http.StatusInternalServerError, 500, nil, "加密错误")
 		return
 	}
-	newUser :=User{
-		UserName:  userName,
-		Password:  string(hasedPassword),
+	newUser := User{
+		UserName: userName,
+		Password: string(hasedPassword),
 	}
 	DB.Create(&newUser)
 
@@ -47,17 +48,16 @@ func Register(ctx *gin.Context) {
 	}
 
 	// 返回结果
-	common.Success(ctx,  gin.H{"token": token}, "注册成功")
+	common.Success(ctx, gin.H{"token": token}, "注册成功")
 }
 
-func Login(ctx *gin.Context)  {
+func Login(ctx *gin.Context) {
 	DB := common.GetDB()
 	var requestUser = User{}
 	ctx.Bind(&requestUser)
 	// 获取参数
 	password := requestUser.Password
 	username := requestUser.UserName
-
 
 	if len(password) < 6 {
 		common.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "密码不能少于6位")
@@ -73,7 +73,7 @@ func Login(ctx *gin.Context)  {
 	}
 
 	// 判断密码收否正确
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) ; err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"code": 400, "msg": "密码错误"})
 		return
 	}
@@ -87,10 +87,10 @@ func Login(ctx *gin.Context)  {
 	}
 
 	// 返回结果
-	common.Success(ctx,  gin.H{"token": token}, "登录成功")
+	common.Success(ctx, gin.H{"token": token}, "登录成功")
 }
 
-func Info(ctx *gin.Context)  {
+func Info(ctx *gin.Context) {
 	user, _ := ctx.Get("user")
 	ctx.JSON(http.StatusOK, gin.H{"code": 200, "data": gin.H{"user": ToUserDto(user.(User))}})
 }
