@@ -196,3 +196,82 @@ func (s *Trip) cancleOrder(orderID uint) error {
 	}
 	return nil
 }
+
+func (s* Trip) changeOrder(orderID uint,tripID uint, catogory string) error{
+	// 1.取得合法订单信息
+	repository := NewTicketRepositoryTX()
+	// 2.取得订单起始到达城市
+	userID := uint(1)
+	oldOrder, err := repository.FindValidOrder(orderID, userID)
+	if err!=nil {
+		return err
+	}
+	//3.repository找到座位信息
+	newSeats, err := repository.FindTripSegment(tripID, oldOrder.startStationNo, oldOrder.endStationNo, catogory)
+	if err != nil {
+		return err
+	}
+	//4.计算出一个有效的座位号
+	newValidSeatNo, err := calculasValidSeatNo(newSeats)
+	if err != nil {
+		repository.Rollback()
+		return err
+	}
+	fmt.Println("经过计算选中的座位号", newValidSeatNo)
+	//5.修改座位信息
+	setZero(newSeats, newValidSeatNo)
+	//6.repository写回修改座位信息
+	err = repository.UpdateTripSegment(newSeats)
+	if err != nil {
+		repository.Rollback()
+		return err
+	}
+	//7.repository下订单
+	//UserID，借助中间件.
+	newOrder := Order{UserID: 1, TripID: tripID, StartStationNo: oldOrder.startStationNo, EndStationNo: oldOrder.endStationNo, SeatNo: newValidSeatNo, SeatCatogory: catogory, Date: time.Now(), Status: "未支付"}
+	fmt.Println("订单", newOrder)
+	err = repository.CreateOrder(&newOrder)
+	if err != nil {
+		repository.Rollback()
+		return err
+	}
+	//8.commit
+	err = repository.Commit()
+	if err != nil {
+		repository.Rollback()
+		return err
+	}
+	// 9.退钱给用户
+	if oldOrder.Status == "已支付" {
+		fmt.Print("退钱给用户")
+	}
+
+	// 10.修改座位信息
+	oldSeats, err := repository.FindTripSegment(oldOrder.TripID, oldOrder.StartStationNo, oldOrder.EndStationNo, oldOrder.SeatCatogory)
+	if err != nil {
+		repository.Rollback()
+		return err
+	}
+	setOne(oldSeats, oldOrder.SeatNo)
+	if len(oldSeats) == 0 {
+		return errors.New("wrong")
+	}
+	err = repository.UpdateTripSegment(oldSeats)
+	if err != nil {
+		repository.Rollback()
+		return err
+	}
+	// 11.更新订单状态
+	err = repository.UpdateOrderStatus(&oldOrder, "已改签")
+	if err != nil {
+		repository.Rollback()
+		return err
+	}
+	// 12.commit
+	err = repository.Commit()
+	if err != nil {
+		repository.Rollback()
+		return err
+	}
+	return nil
+}

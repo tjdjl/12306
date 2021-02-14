@@ -23,7 +23,8 @@ func CollectRoute(r *gin.Engine) *gin.Engine {
 	r.GET("/buy/ticket/", tickets.BuyTicket)
 	//退票
 	r.PUT("/cancel/order/", tickets.CancelTicket)
-	// r.PUT("/change/order/", orders.ChangeTicket)
+	//改签
+	r.PUT("/change/order/", tickets.ChangeTicket)
 
 	return r
 }

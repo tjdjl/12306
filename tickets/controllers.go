@@ -67,3 +67,27 @@ func CancelTicket(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "退票成功"})
 }
+
+//ChangeTicket 改签
+func ChangeTicket(c *gin.Context) {
+	id64, err := strconv.ParseUint(c.Query("ticket_outside_id"), 10, 32)
+	id := uint(id64)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"code": 422, "msg": "Invalid id"})
+		return
+	}
+	tripID64, err := strconv.ParseUint(c.Query("tripID"), 10, 32)
+	tripID := uint(tripID64)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"code": 422, "msg": "Invalid trip id"})
+		return
+	}
+	seatCategory := c.Query("seatCategory")
+	trip:=Trip{}
+	err=trip.changeOrder(id,tripID,seatCategory)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"code": 422, "msg": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "改签成功"})
+}
