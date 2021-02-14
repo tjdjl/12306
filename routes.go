@@ -14,7 +14,7 @@ func CollectRoute(r *gin.Engine) *gin.Engine {
 	// r.GET("/api/auth/info", users.AuthMiddleware(), users.Info)
 
 	//stations
-	r.GET("/search/allstations/", stations.StationList)
+	r.GET("/search/v1/queryAllStations/", stations.StationList)
 
 	//tickets
 	//查票
@@ -22,7 +22,7 @@ func CollectRoute(r *gin.Engine) *gin.Engine {
 	//买票
 	r.GET("/buy/ticket/", tickets.BuyTicket)
 	//退票
-	r.PUT("/cancel/order/", tickets.CancelTicket)
+	r.PUT("/reticket/api/v1/", tickets.CancelTicket)
 	//改签
 	r.PUT("/change/order/", tickets.ChangeTicket)
 

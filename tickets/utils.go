@@ -6,15 +6,31 @@ import (
 )
 
 //calculasRemainSeats 计算余量
-func calculasRemainSeats(info []TripSegment) uint {
+func calculasRemainSeats(info []TripSegment) *map[string]uint {
+	var resMap map[string]uint
+	resMap = make(map[string]uint)
+	if len(info) == 0 {
+		return &resMap
+	}
+	var bytesMap map[string][][]uint8
+	bytesMap = make(map[string][][]uint8)
+	for i := 0; i < len(info); i++ {
+		bytesMap[info[i].SeatCatogory] = append(bytesMap[info[i].SeatCatogory], info[i].SeatBytes)
+	}
+	for k, v := range bytesMap {
+		res := calculasRemainCatorySeats(v)
+		resMap[k] = res
+	}
+	return &resMap
+}
+func calculasRemainCatorySeats(info [][]uint8) uint {
 	if len(info) == 0 {
 		return 0
 	}
-	resBytes := info[0].SeatBytes
-	//对每个区间作与运算
+	resBytes := info[0]
 	for i := 1; i < len(info); i++ {
 		for j := 0; j < len(resBytes); j++ {
-			resBytes[j] = resBytes[j] & info[i].SeatBytes[j]
+			resBytes[j] = resBytes[j] & info[i][j]
 		}
 		// fmt.Println("与运算后bytes", resBytes)
 	}
