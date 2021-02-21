@@ -1,8 +1,7 @@
-package tickets
+package trains
 
 import (
 	"errors"
-	"fmt"
 )
 
 //calculasRemainSeats 计算余量
@@ -44,7 +43,6 @@ func calculasValidSeatNo(info []TripSegment) (uint, error) {
 	}
 	resBytes := make([]uint8, len(info[0].SeatBytes))
 	copy(resBytes, info[0].SeatBytes)
-	fmt.Println(resBytes)
 	//对每个区间作与运算
 	for i := 1; i < len(info); i++ {
 		//计算Seats 经过与运算后的位图

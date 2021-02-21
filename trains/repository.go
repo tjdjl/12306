@@ -1,4 +1,4 @@
-package tickets
+package trains
 
 import (
 	"context"
@@ -10,12 +10,13 @@ import (
 
 type ITicketRepository interface {
 	FindCityID(cityName string) (uint, error)
-	FindTripStationPair(id string, date string, isToday, isFast bool) ([]TrainStaionPair, error)
-	FindTripSegment(tripID string, startStationNo, endStationNo uint) ([]TripSegment, error)
+	FindTrainStaions(trainID string) ([]TrainStaion, error)
+	FindTripStationPairs(id string, date string, isToday, isFast bool) ([]TrainStaionPair, error)
+	FindTripSegments(tripID string, startStationNo, endStationNo uint) ([]TripSegment, error)
 }
 
 type ITicketRepositoryTX interface {
-	FindTripSegment(tripID string, startStationNo, endStationNo uint, catogory string) ([]TripSegment, error)
+	FindTripSegments(tripID string, startStationNo, endStationNo uint, catogory string) ([]TripSegment, error)
 	FindValidOrder(orderID, userID uint) (Order, error)
 	UpdateTripSegment(seats []TripSegment) error
 	UpdateOrderStatus(order *Order, s string) error
@@ -48,8 +49,15 @@ func (c TicketRepository) FindCityID(cityName string) (uint, error) {
 	return res[0], err
 }
 
+//FindTrainStaions
+func (c TicketRepository) FindTrainStaions(trainID string) ([]TrainStaion, error) {
+	var res []TrainStaion
+	err := c.DB.Where("train_id = ?", trainID).Find(&res).Error
+	return res, err
+}
+
 //FindTripStationPair 找到TripStationPair
-func (c TicketRepository) FindTripStationPair(id string, date string, isToday, isFast bool) ([]TrainStaionPair, error) {
+func (c TicketRepository) FindTripStationPairs(id string, date string, isToday, isFast bool) ([]TrainStaionPair, error) {
 	var models []TrainStaionPair
 	var sql string
 	if isToday == false {
@@ -90,14 +98,14 @@ func (c TicketRepository) FindTripStationPair(id string, date string, isToday, i
 	return models, err
 }
 
-func (c TicketRepository) FindTripSegment(tripID string, startStationNo, endStationNo uint) ([]TripSegment, error) {
+func (c TicketRepository) FindTripSegments(tripID string, startStationNo, endStationNo uint) ([]TripSegment, error) {
 	var models []TripSegment
 	sql := "SELECT * FROM trip_segment WHERE trip_id = ? AND segment_no between ? AND ?"
 	err := c.DB.Raw(sql, tripID, startStationNo, endStationNo-1).Find(&models).Error
 	return models, err
 }
 
-func (c TicketRepositoryTX) FindTripSegment(tripID string, startStationNo, endStationNo uint, catogory string) ([]TripSegment, error) {
+func (c TicketRepositoryTX) FindTripSegments(tripID string, startStationNo, endStationNo uint, catogory string) ([]TripSegment, error) {
 	var models []TripSegment
 	sql := "SELECT * FROM trip_segment WHERE trip_id = ? AND segment_no between ? AND ? AND seat_catogory = ?"
 	err := c.TX.Set("gorm:query_option", "FOR UPDATE").Raw(sql, tripID, startStationNo, endStationNo-1, catogory).Find(&models).Error

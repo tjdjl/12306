@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//StationList
-func StationList(c *gin.Context) {
+//AllStationsList
+func AllStationsList(c *gin.Context) {
 	stationModels, err := FindStations()
 	hotStationModels, err := FindHotStations()
 	if err != nil {

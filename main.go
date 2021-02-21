@@ -5,7 +5,7 @@ import (
 
 	"12306.com/12306/common"
 	"12306.com/12306/stations"
-	"12306.com/12306/tickets"
+	"12306.com/12306/trains"
 	"12306.com/12306/users"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
@@ -17,7 +17,7 @@ func main() {
 	db := common.InitDB()
 	db.AutoMigrate(&users.User{})
 	db.AutoMigrate(&stations.Station{})
-	db.AutoMigrate(&tickets.Order{})
+	db.AutoMigrate(&trains.Order{})
 
 	defer db.Close()
 

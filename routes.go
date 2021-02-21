@@ -2,7 +2,7 @@ package main
 
 import (
 	"12306.com/12306/stations"
-	"12306.com/12306/tickets"
+	"12306.com/12306/trains"
 	"12306.com/12306/users"
 	"github.com/gin-gonic/gin"
 )
@@ -14,15 +14,18 @@ func CollectRoute(r *gin.Engine) *gin.Engine {
 	// r.GET("/api/auth/info", users.AuthMiddleware(), users.Info)
 
 	//stations
-	r.GET("/search/v1/queryAllStations/", stations.StationList)
+	//查找所有站点
+	r.GET("/search/api/v1/queryAllStations/", stations.AllStationsList)
 
-	//tickets
+	//trains
+	//查某车次经过的站点
+	r.GET("/search/api/v1/queryStation/", trains.TrainStationList)
 	//查票
-	r.GET("/search/remainder/", tickets.ListTicket)
+	r.POST("/search/api/v1/remainder/", trains.TicketList)
 	//买票
-	r.GET("/buy/ticket/", tickets.BuyTicket)
-	// //退票
-	r.PUT("/reticket/api/v1/", tickets.CancelTicket)
+	r.GET("/buy/ticket/", trains.TicketBuy)
+	//退票
+	r.POST("/reticket/api/v1/", trains.TicketCancel)
 	// r.PUT("/change/order/", orders.ChangeTicket)
 
 	return r

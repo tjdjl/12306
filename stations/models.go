@@ -8,9 +8,9 @@ import (
 
 // Station Station model
 type Station struct {
-	ID    uint   `gorm:"primary_key" json:"id"`
-	Spell string `json:"spell"`
-	Name  string `json:"name"`
+	ID    uint   `gorm:"column:id;primary_key"`
+	Spell string `gorm:"column:spell"`
+	Name  string `gorm:"column:name"`
 }
 
 //FindStations Find all staions from database
