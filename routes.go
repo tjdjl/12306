@@ -26,7 +26,8 @@ func CollectRoute(r *gin.Engine) *gin.Engine {
 	r.GET("/buy/ticket/", trains.TicketBuy)
 	//退票
 	r.POST("/reticket/api/v1/", trains.TicketCancel)
-	// r.PUT("/change/order/", orders.ChangeTicket)
+	//改票
+	r.PUT("/change/order/", trains.TicketChange)
 
 	return r
 }

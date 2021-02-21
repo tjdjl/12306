@@ -237,3 +237,50 @@ func (s *Trip) cancleOrder(orderID uint) error {
 // func (s *Trip) handelCandidate(startStationNo, endStationNo uint) {
 
 // }
+func (s *Trip) changeOrder(orderID uint, startStationNo, endStationNo uint, catogory string) error {
+	repository := NewTicketRepositoryTX()
+	// 1.取得合法订单信息
+	userID := uint(1)
+	order, err := repository.FindValidOrder(orderID, userID)
+	if err != nil {
+		return err
+	}
+	//2.找到并修改新座位信息
+	newSeats, err := repository.FindTripSegments(s.TripID, startStationNo, endStationNo, catogory)
+	if err != nil {
+		return err
+	}
+	validSeatNo, err := calculasValidSeatNo(newSeats)
+	setZero(newSeats, validSeatNo)
+	err = repository.UpdateTripSegment(newSeats)
+
+	// 3.修改旧座位信息
+	seats, err := repository.FindTripSegments(order.TripID, order.StartStationNo, order.EndStationNo, order.SeatCatogory)
+	if err != nil {
+		repository.Rollback()
+		return err
+	}
+	if len(seats) == 0 {
+		return errors.New("座位信息错误")
+	}
+	setOne(seats, order.SeatNo)
+	err = repository.UpdateTripSegment(seats)
+	if err != nil {
+		repository.Rollback()
+		return err
+	}
+	// 4.更新订单状态
+	newMap := map[string]interface{}{"status": "已改票", "trip_id": s.TripID, "start_station_no": startStationNo, "end_station_no": endStationNo, "seat_catogory": catogory, "seat_no": validSeatNo}
+	err = repository.UpdateOrder(&order, newMap)
+	if err != nil {
+		repository.Rollback()
+		return err
+	}
+	// 5.commit
+	err = repository.Commit()
+	if err != nil {
+		repository.Rollback()
+		return err
+	}
+	return nil
+}

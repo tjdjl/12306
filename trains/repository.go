@@ -20,6 +20,7 @@ type ITicketRepositoryTX interface {
 	FindValidOrder(orderID, userID uint) (Order, error)
 	UpdateTripSegment(seats []TripSegment) error
 	UpdateOrderStatus(order *Order, s string) error
+	UpdateOrder(order *Order, newMap map[string]interface{}) error
 	CreateOrder(order *Order) error
 	Rollback()
 	Commit() error
@@ -131,7 +132,10 @@ func (c TicketRepositoryTX) UpdateOrderStatus(order *Order, s string) error {
 	err := c.TX.Model(&order).Update("status", s).Error
 	return err
 }
-
+func (c TicketRepositoryTX) UpdateOrder(order *Order, newMap map[string]interface{}) error {
+	err := c.TX.Model(&order).Update(newMap).Error
+	return err
+}
 func (c TicketRepositoryTX) CreateOrder(order *Order) error {
 	err := c.TX.Create(&order).Error
 	return err
