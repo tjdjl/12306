@@ -12,7 +12,7 @@ func TrainStationList(c *gin.Context) {
 	//获取参数
 	trainID := c.Query("train_no")
 	isToday := true
-	//查询该车次经过的站点
+	//查询该车次经过的站点信息
 	train := Train{trainID}
 	models, err := train.getTrainStaions()
 	//响应
@@ -31,16 +31,13 @@ func TrainStationList(c *gin.Context) {
 //TicketList 查找余票，本质是查找车次站点对及其余票
 func TicketList(c *gin.Context) {
 	//获取参数
+	// fmt.Println("去参数前")
 	startCity := c.Query("startCity")
+	// fmt.Println(startCity)
+	// fmt.Println("去参数后")
 	endCity := c.Query("endCity")
-	date := c.Query("date")
+	date := c.Query("date") //date应该是2006-02-03这种格式
 	category := c.Query("type")
-	//检验date是否是合法日期，并把date转换成2006-02-03这种格式
-	// _, err := time.ParseInLocation("2006-01-02", date, time.Local)
-	// if err != nil {
-	// 	c.JSON(http.StatusNotFound, gin.H{"code": 422, "msg": err.Error()})
-	// 	return
-	// }
 
 	//查找车次站点对
 	var models []TrainStaionPair

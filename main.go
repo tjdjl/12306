@@ -18,6 +18,7 @@ func main() {
 	db.AutoMigrate(&users.User{})
 	db.AutoMigrate(&stations.Station{})
 	db.AutoMigrate(&trains.Order{})
+	db.AutoMigrate(&users.Passanger{})
 
 	defer db.Close()
 

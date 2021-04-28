@@ -1,10 +1,13 @@
-package users
+package middleware
 
 import (
-	"12306.com/12306/common"
-	"github.com/gin-gonic/gin"
+	"fmt"
 	"net/http"
 	"strings"
+
+	"12306.com/12306/common"
+	"12306.com/12306/users"
+	"github.com/gin-gonic/gin"
 )
 
 func AuthMiddleware() gin.HandlerFunc {
@@ -14,7 +17,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		// validate token formate
 		if tokenString == "" || !strings.HasPrefix(tokenString, "Bearer ") {
-			ctx.JSON(http.StatusUnauthorized, gin.H{"code": 401, "msg": "权限不足"})
+			ctx.JSON(http.StatusUnauthorized, gin.H{"code": 403, "msg": "权限不足"})
 			ctx.Abort()
 			return
 		}
@@ -31,7 +34,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		// 验证通过后获取claim 中的userId
 		userId := claims.UserId
 		DB := common.GetDB()
-		var user User
+		var user users.User
 		DB.First(&user, userId)
 
 		// 用户
@@ -43,6 +46,8 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		// 用户存在 将user 的信息写入上下文
 		ctx.Set("user", user)
+		a, _ := ctx.Get("user")
+		fmt.Println("从token中取得用户信息:", a.(users.User).UserName)
 		ctx.Next()
 	}
 }

@@ -74,7 +74,7 @@ func (s *TicketsSerializer) Response() []TicketResponse {
 			FirstSeatsNumber:      (*remainSeats)["FirstSeat"],
 			SecondSeatsNumber:     (*remainSeats)["SecondSeat"],
 			NoSeatsNumber:         (*remainSeats)["NoSeat"],
-			HardSeatsNumber:       (*remainSeats)["HardSeats"],
+			HardSeatsNumber:       (*remainSeats)["HardSeat"],
 			HardBerthNumber:       (*remainSeats)["HardBerth"],
 			SoftBerthNumber:       (*remainSeats)["SoftBerth"],
 			SeniorSoftBerthNumber: (*remainSeats)["SeniorSoftBerth"],

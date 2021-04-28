@@ -3,6 +3,8 @@ package trains
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 
 	"12306.com/12306/common"
 	"github.com/jinzhu/gorm"
@@ -11,7 +13,7 @@ import (
 type ITicketRepository interface {
 	FindCityID(cityName string) (uint, error)
 	FindTrainStaions(trainID string) ([]TrainStaion, error)
-	FindTripStationPairs(id string, date string, isToday, isFast bool) ([]TrainStaionPair, error)
+	FindTrainStationPairs(id string, date string, isToday, isFast bool) ([]TrainStaionPair, error)
 	FindTripSegments(tripID string, startStationNo, endStationNo uint) ([]TripSegment, error)
 }
 
@@ -39,7 +41,7 @@ func NewTicketRepository() ITicketRepository {
 
 func NewTicketRepositoryTX() ITicketRepositoryTX {
 	return TicketRepositoryTX{TX: common.GetDB().BeginTx(context.Background(), &sql.TxOptions{
-		Isolation: sql.LevelReadUncommitted,
+		Isolation: sql.LevelReadCommitted,
 	})}
 }
 
@@ -47,6 +49,9 @@ func NewTicketRepositoryTX() ITicketRepositoryTX {
 func (c TicketRepository) FindCityID(cityName string) (uint, error) {
 	var res []uint
 	err := c.DB.Table("cities").Where("name = ?", cityName).Pluck("ID", &res).Error
+	if len(res) == 0 {
+		return 0, errors.New("不存在该城市")
+	}
 	return res[0], err
 }
 
@@ -57,8 +62,8 @@ func (c TicketRepository) FindTrainStaions(trainID string) ([]TrainStaion, error
 	return res, err
 }
 
-//FindTripStationPair 找到TripStationPair
-func (c TicketRepository) FindTripStationPairs(id string, date string, isToday, isFast bool) ([]TrainStaionPair, error) {
+//FindTrainStationPairs 找到TrainStationPairs
+func (c TicketRepository) FindTrainStationPairs(id string, date string, isToday, isFast bool) ([]TrainStaionPair, error) {
 	var models []TrainStaionPair
 	var sql string
 	if isToday == false {
@@ -120,11 +125,13 @@ func (c TicketRepositoryTX) FindValidOrder(orderID, userID uint) (Order, error) 
 }
 func (c TicketRepositoryTX) UpdateTripSegment(seats []TripSegment) error {
 	var err error
+	fmt.Println(len(seats))
 	for i := 0; i < len(seats); i++ {
-		err = c.TX.Save(seats[i]).Error
+		err = c.TX.Model(&seats[i]).Update("seat_bytes", seats[i].SeatBytes).Error
 		if err != nil {
 			return err
 		}
+
 	}
 	return err
 }
