@@ -1,3 +1,6 @@
+# github.com/damnever/goqueue v0.0.0-20180509131634-b40e496fb2dc
+## explicit
+github.com/damnever/goqueue
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
 ## explicit
 github.com/dgrijalva/jwt-go
