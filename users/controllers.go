@@ -9,6 +9,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+//注册
 func Register(c *gin.Context) {
 	//校验数据
 	// userModelValidator := NewUserModelValidator()
@@ -40,6 +41,7 @@ func Register(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "成功", "data": data}) //返回结果
 }
 
+//登录
 func Login(c *gin.Context) {
 	// 获取参数
 	var requestUser = User{}
@@ -71,6 +73,7 @@ func Login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "成功", "data": data})
 }
 
+//添加乘客
 func AddPassenger(c *gin.Context) {
 	var passanger = Passanger{}
 	c.Bind(&passanger)
@@ -87,9 +90,11 @@ func AddPassenger(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "成功"})
 }
 
+//更新乘客
 func UpdatePassenger(c *gin.Context) {
 }
 
+//查询乘客
 func QueryPassenger(c *gin.Context) {
 	// 获取用户信息
 	user, _ := c.Get("user")

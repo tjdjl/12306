@@ -30,6 +30,7 @@ func (u *User) setPassword(password string) error {
 }
 
 type Passanger struct {
+	ID                uint   `gorm:"column:id;primary_key" `
 	UserID            uint   `form:"user_id" gorm:"user_id"`
 	PhoneNumber       string `form:"phone_number" gorm:"phone_number"`
 	Name              string `form:"name" gorm:"name"`

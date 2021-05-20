@@ -3,6 +3,7 @@ package trains
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,14 +32,10 @@ func TrainStationList(c *gin.Context) {
 //TicketList 查找余票，本质是查找车次站点对及其余票
 func TicketList(c *gin.Context) {
 	//获取参数
-	// fmt.Println("去参数前")
 	startCity := c.Query("startCity")
-	// fmt.Println(startCity)
-	// fmt.Println("去参数后")
 	endCity := c.Query("endCity")
 	date := c.Query("date") //date应该是2006-02-03这种格式
 	category := c.Query("type")
-
 	//查找车次站点对
 	var models []TrainStaionPair
 	models, err := ListTrainStaionPair(startCity, endCity, date, category == "1")
@@ -53,24 +50,28 @@ func TicketList(c *gin.Context) {
 
 //TicketBuy 买票
 func TicketBuy(c *gin.Context) {
-	//获取参数
+	//获取参数,假设前端传参无问题
 	tripID := c.Query("tripID")
-	startStationNo, err := strconv.ParseUint(c.Query("startStationNo"), 10, 32)
-	endStationNo, err := strconv.ParseUint(c.Query("endStationNo"), 10, 32)
+	startStationNo, _ := strconv.ParseUint(c.Query("startStationNo"), 10, 32)
+	endStationNo, _ := strconv.ParseUint(c.Query("endStationNo"), 10, 32)
 	seatCategory := c.Query("seatCategory")
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"code": 422, "msg": err.Error()})
-		return
+	count, _ := strconv.ParseUint(c.Query("count"), 10, 32)
+	passangerIDs_ := strings.Split(c.Query("passangerIDs"), "&")
+
+	var passangerIDs []uint64 = make([]uint64, 0)
+	for i := 0; i < len(passangerIDs_); i++ {
+		id, _ := strconv.ParseUint(passangerIDs_[i], 10, 64)
+		passangerIDs = append(passangerIDs, id)
 	}
 	//买票
 	trip := Trip{tripID}
-	err = trip.orderOneSeat(uint(startStationNo), uint(endStationNo), seatCategory) //找到空闲的座位号；
+	err := trip.orderSomeSeat(int32(count), uint(startStationNo), uint(endStationNo), seatCategory, passangerIDs)
 	//响应
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"code": 422, "msg": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "买票成功"}) //返回结果
+	c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "买票成功"})
 }
 
 //TicketCancel 退票
@@ -83,7 +84,7 @@ func TicketCancel(c *gin.Context) {
 	}
 	//退票
 	trip := Trip{}
-	err = trip.cancleOrder(uint(id64))
+	err = trip.cancleOneOrder(uint(id64))
 	//响应
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"code": 422, "msg": err.Error()})
@@ -104,7 +105,7 @@ func TicketChange(c *gin.Context) {
 		return
 	}
 	newTrip := Trip{tripID}
-	err = newTrip.changeOrder(uint(id64), uint(startStationNo), uint(endStationNo), seatCategory)
+	err = newTrip.changeOneOrder(uint(id64), uint(startStationNo), uint(endStationNo), seatCategory)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"code": 422, "msg": err.Error()})
 		return

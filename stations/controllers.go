@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//AllStationsList
+//AllStationsList 查询所有站点
 func AllStationsList(c *gin.Context) {
 	stationModels, err := FindStations()
 	hotStationModels, err := FindHotStations()
